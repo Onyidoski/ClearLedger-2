@@ -4,7 +4,7 @@ const Moralis = require('moralis').default;
 const { EvmChain } = require('@moralisweb3/common-evm-utils');
 const Transaction = require('../models/Transaction');
 
-// --- Helper: Get Prices for Top Tokens (Using CryptoCompare) ---
+// --- Helper: Get Prices ---
 const getPrices = async (tokenSymbols = []) => {
     let prices = {};
     let ethPrice = 0;
@@ -12,16 +12,13 @@ const getPrices = async (tokenSymbols = []) => {
     try {
         // 1. Get ETH Price
         const ethRes = await axios.get('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD');
-        ethPrice = ethRes.data.USD;
+        ethPrice = ethRes.data.USD || 0;
 
-        // 2. Get Token Prices (Batch)
-        // CryptoCompare handles about 30 symbols in one request easily
+        // 2. Get Token Prices
         if (tokenSymbols.length > 0) {
             const symbols = tokenSymbols.slice(0, 30).join(',');
             const url = `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${symbols}&tsyms=USD`;
             const response = await axios.get(url);
-            
-            // Format: { "OMG": { "USD": 1.23 } } -> { "OMG": 1.23 }
             for (const [symbol, data] of Object.entries(response.data)) {
                 if (data.USD) prices[symbol] = data.USD;
             }
@@ -29,19 +26,17 @@ const getPrices = async (tokenSymbols = []) => {
     } catch (error) {
         console.error("Price Fetch Error:", error.message);
     }
-
     return { eth: ethPrice, tokens: prices };
 };
 
-// --- Sync Transactions (Keep Etherscan for History/Chart) ---
-// Moralis has a transaction API too, but since your Chart works, 
-// we will keep this part as-is to save you effort.
+// --- Sync Transactions (Newest First) ---
 exports.getTransactions = async (req, res) => {
     const { address } = req.params;
     const apiKey = process.env.ETHERSCAN_API_KEY;
 
     try {
-        const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
+        // Sort DESC to show newest activity first
+        const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=desc&apikey=${apiKey}`;
         const response = await axios.get(url);
         const data = response.data;
 
@@ -51,24 +46,19 @@ exports.getTransactions = async (req, res) => {
 
         const rawTransactions = data.result || [];
         
-        // Save only the last 1000 to DB to be fast
-        const limitedTx = rawTransactions.slice(-1000); 
+        // Show last 50 transactions for the UI list
+        const limitedTx = rawTransactions.slice(0, 50); 
 
-        const bulkOps = limitedTx.map(tx => ({
-            updateOne: {
-                filter: { hash: tx.hash },
-                update: { $set: { ...tx, walletAddress: address.toLowerCase(), timeStamp: new Date(tx.timeStamp * 1000) } },
-                upsert: true
-            }
+        const cleanedTransactions = limitedTx.map(tx => ({
+            ...tx,
+            timeStamp: Number(tx.timeStamp) * 1000, 
+            walletAddress: address.toLowerCase()
         }));
 
-        if (bulkOps.length > 0) await Transaction.bulkWrite(bulkOps);
-
-        // Return sorted list for the Chart
         res.json({ 
             message: "Success", 
-            count: limitedTx.length, 
-            transactions: limitedTx.sort((a, b) => b.timeStamp - a.timeStamp) 
+            count: cleanedTransactions.length, 
+            transactions: cleanedTransactions 
         });
 
     } catch (error) {
@@ -77,38 +67,36 @@ exports.getTransactions = async (req, res) => {
     }
 };
 
-// --- NEW: Accurate Stats using Moralis ---
+// --- Get Wallet Stats (With Gas Calculation) ---
 exports.getWalletStats = async (req, res) => {
     const { address } = req.params;
     const chain = EvmChain.ETHEREUM;
+    const apiKey = process.env.ETHERSCAN_API_KEY;
 
     try {
-        // 1. Get Native Balance (ETH) - Includes Internal Txs!
+        // 1. Get Native Balance (ETH)
         const nativeBalanceResponse = await Moralis.EvmApi.balance.getNativeBalance({
             address,
             chain,
         });
-        const nativeBalance = nativeBalanceResponse.result.balance.ether; // returns string
+        const rawWei = nativeBalanceResponse.toJSON().balance; 
+        const nativeBalance = Number(rawWei) / 1e18;
 
-        // 2. Get Token Balances (The Accurate List)
+        // 2. Get Token Balances (Spam Filtered)
         const tokenResponse = await Moralis.EvmApi.token.getWalletTokenBalances({
             address,
             chain,
+            excludeSpam: true 
         });
+        const rawTokens = tokenResponse.toJSON();
         
-        // Moralis gives us the exact list of tokens currently owned
-        const rawTokens = tokenResponse.toJSON(); // Convert to clean JSON
-        
-        // 3. Prepare Symbols for Price Fetching
-        // Filter out spam/scam tokens (heuristic: no symbol or weird names)
+        // 3. Prepare Symbols & Prices
         const validTokens = rawTokens.filter(t => t.symbol && t.symbol.length < 7);
-        const topTokens = validTokens.slice(0, 15); // Take top 15
+        const topTokens = validTokens.slice(0, 15);
         const symbols = topTokens.map(t => t.symbol);
-
-        // 4. Get Prices
         const prices = await getPrices(symbols);
 
-        // 5. Build the "Portfolio Assets" List
+        // 4. Calculate Token Values
         const tokenHoldings = topTokens.map(t => {
             const balance = parseFloat(t.balance) / (10 ** t.decimals);
             const price = prices.tokens[t.symbol] || 0;
@@ -120,33 +108,62 @@ exports.getWalletStats = async (req, res) => {
             };
         }).sort((a, b) => b.valueUSD - a.valueUSD);
 
-        // 6. Calculate Net Worth
-        const ethBalance = parseFloat(nativeBalance);
-        const ethValue = ethBalance * prices.eth;
-        const tokenValue = tokenHoldings.reduce((sum, t) => sum + t.valueUSD, 0);
-        const netWorth = ethValue + tokenValue;
+        // 5. Net Worth (Safe Mode: ETH Only)
+        const ethValue = nativeBalance * prices.eth;
+        const netWorth = ethValue; 
 
-        // 7. Generate Insights
+        // --- NEW: Calculate Total Gas Fees Burned ---
+        let totalGasEth = 0;
+        try {
+            // Fetch full history (up to 10k txs) to sum gas
+            const txUrl = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&sort=asc&apikey=${apiKey}`;
+            const txRes = await axios.get(txUrl);
+            
+            if (txRes.data.status === "1" && txRes.data.result) {
+                const allTxs = txRes.data.result;
+                const myAddress = address.toLowerCase();
+
+                // Sum gas for outgoing transactions
+                totalGasEth = allTxs.reduce((acc, tx) => {
+                    if (tx.from.toLowerCase() === myAddress) {
+                        // Gas Cost = GasUsed * GasPrice
+                        const gasCost = BigInt(tx.gasUsed) * BigInt(tx.gasPrice);
+                        return acc + Number(gasCost);
+                    }
+                    return acc;
+                }, 0);
+                
+                // Convert Wei to ETH
+                totalGasEth = totalGasEth / 1e18;
+            }
+        } catch (err) {
+            console.error("Gas Calc Error:", err.message);
+            // Non-critical, continue with 0 if fails
+        }
+
+        const totalGasUsd = totalGasEth * prices.eth;
+
+        // 6. Generate Insights
         const insights = [];
-        if (tokenHoldings.length > 5) insights.push({ title: "Diversified", type: "success", message: `Holding ${tokenHoldings.length} assets.` });
-        if (netWorth > 10000) insights.push({ title: "Whale Status", type: "info", message: "High value portfolio." });
+        if (tokenHoldings.length > 5) insights.push({ title: "Diversified", type: "success", message: `Holding ${tokenHoldings.length} verified assets.` });
+        if (netWorth > 100000) insights.push({ title: "Whale Status", type: "info", message: "High value portfolio." });
+        if (totalGasEth > 1) insights.push({ title: "Active User", type: "warning", message: `Burned ${totalGasEth.toFixed(2)} ETH in fees.` });
 
-        // 8. Send Response
         res.json({
             address: address,
             currentPriceUSD: prices.eth,
-            balanceETH: ethBalance,
+            balanceETH: nativeBalance,
             balanceUSD: ethValue,
             netWorthUSD: netWorth,
-            totalGasPaidETH: 0, // Moralis doesn't give gas history easily, we can skip or calculate separately
-            totalGasPaidUSD: 0,
-            totalTransactions: 0, // Handled by the other endpoint
+            totalGasPaidETH: totalGasEth, // <--- Now Accurate
+            totalGasPaidUSD: totalGasUsd, // <--- Now Accurate
+            totalTransactions: 0,
             tokens: tokenHoldings,
             insights: insights
         });
 
     } catch (error) {
         console.error("Moralis Error:", error);
-        res.status(500).json({ error: "Failed to fetch Moralis data" });
+        res.status(500).json({ error: "Failed to fetch data" });
     }
 };
