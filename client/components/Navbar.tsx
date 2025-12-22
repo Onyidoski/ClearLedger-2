@@ -59,7 +59,7 @@ export default function Navbar() {
           <div className="hidden md:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex items-center gap-1 bg-[#0A0A0A] border border-white/10 rounded-full px-1.5 py-1.5 shadow-2xl backdrop-blur-xl">
                 <Link 
-                    href="#features" 
+                    href="/features" 
                     className="px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 uppercase tracking-wide"
                 >
                     Features
