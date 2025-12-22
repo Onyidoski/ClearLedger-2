@@ -1,3 +1,4 @@
+// client/app/analyze/page.tsx
 "use client";
 
 import { useState } from 'react';
@@ -15,10 +16,20 @@ import Link from 'next/link';
 // --- Types ---
 interface Insight { title: string; type: 'warning' | 'success' | 'info'; message: string; }
 interface Token { symbol: string; balance: number; price: number; valueUSD: number; }
+
+// Updated Interface to include spamTokenCount
 interface WalletStats {
-    address: string; currentPriceUSD: number; balanceETH: number; balanceUSD: number;
-    netWorthUSD: number; totalGasPaidETH: number; totalGasPaidUSD: number;
-    totalTransactions: number; tokens: Token[]; insights: Insight[];
+    address: string; 
+    currentPriceUSD: number; 
+    balanceETH: number; 
+    balanceUSD: number;
+    netWorthUSD: number; 
+    totalGasPaidETH: number; 
+    totalGasPaidUSD: number;
+    spamTokenCount: number; // <--- ADDED THIS
+    totalTransactions: number; 
+    tokens: Token[]; 
+    insights: Insight[];
 }
 
 export default function AnalyzePage() {
@@ -135,26 +146,45 @@ export default function AnalyzePage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* Updated Grid to 3 Columns */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            
+                            {/* Card 1: Net Worth */}
                             <div className="relative bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-10 overflow-hidden group hover:border-[#492BFF]/50 transition-colors">
                                 <div className="absolute -right-10 -top-10 w-64 h-64 bg-[#492BFF]/10 rounded-full blur-[80px] group-hover:bg-[#492BFF]/20 transition-all"></div>
                                 <h3 className="text-gray-500 text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Wallet className="w-5 h-5 text-[#492BFF]" /> Real Net Worth
                                 </h3>
-                                <p className="text-6xl md:text-7xl font-black text-white tracking-tighter">
+                                <p className="text-5xl md:text-6xl font-black text-white tracking-tighter">
                                     ${(stats.netWorthUSD || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                 </p>
                             </div>
 
+                            {/* Card 2: Gas Fees */}
                             <div className="relative bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-10 overflow-hidden group hover:border-[#FFAC43]/50 transition-colors">
                                 <div className="absolute -right-10 -top-10 w-64 h-64 bg-[#FFAC43]/10 rounded-full blur-[80px] group-hover:bg-[#FFAC43]/20 transition-all"></div>
                                 <h3 className="text-gray-500 text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Flame className="w-5 h-5 text-[#FFAC43]" /> Total Fees Spent
                                 </h3>
-                                <p className="text-6xl md:text-7xl font-black text-white tracking-tighter">
+                                <p className="text-5xl md:text-6xl font-black text-white tracking-tighter">
                                     -${(stats.totalGasPaidUSD || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                                 </p>
                             </div>
+
+                            {/* Card 3: NEW SPAM BLOCKED */}
+                            <div className="relative bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-10 overflow-hidden group hover:border-red-500/50 transition-colors">
+                                <div className="absolute -right-10 -top-10 w-64 h-64 bg-red-500/10 rounded-full blur-[80px] group-hover:bg-red-500/20 transition-all"></div>
+                                <h3 className="text-gray-500 text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <ShieldCheck className="w-5 h-5 text-red-500" /> Spam Blocked
+                                </h3>
+                                <p className="text-5xl md:text-6xl font-black text-white tracking-tighter">
+                                    {stats.spamTokenCount || 0}
+                                </p>
+                                <p className="text-xs text-red-400 mt-2 font-mono uppercase">
+                                    Fake assets removed
+                                </p>
+                            </div>
+
                         </div>
 
                         <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-8 mb-8">
