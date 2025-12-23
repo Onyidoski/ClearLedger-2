@@ -203,12 +203,12 @@ export default function AnalyzePage() {
                     </h1>
                     <div className="w-full relative z-20 mb-8 group">
                         <div className="absolute -inset-[2px] bg-gradient-to-r from-[#492BFF] via-[#00C2FF] to-[#492BFF] rounded-full blur-md opacity-40 group-hover:opacity-100 transition duration-500"></div>
-                        <div className="relative flex items-center bg-[#000] border border-white/10 rounded-full p-2 shadow-2xl">
-                            <Terminal className="ml-6 w-6 h-6 text-gray-500 group-focus-within:text-[#00C2FF] transition" />
+                        <div className="relative flex flex-col md:flex-row items-stretch md:items-center bg-[#000] border border-white/10 rounded-3xl md:rounded-full p-2 shadow-2xl gap-2 md:gap-0">
+                            <Terminal className="hidden md:block ml-6 w-6 h-6 text-gray-500 group-focus-within:text-[#00C2FF] transition" />
                             <input
                                 type="text"
                                 placeholder="Paste an Ethereum Address (e.g. 0xd8...)"
-                                className="flex-1 bg-transparent border-none text-white px-6 py-5 text-lg focus:outline-none placeholder-gray-600 font-bold tracking-wide w-full"
+                                className="flex-1 bg-transparent border-none text-white px-6 py-4 md:py-5 text-base md:text-lg focus:outline-none placeholder-gray-600 font-bold tracking-wide w-full text-center md:text-left"
                                 value={address}
                                 onChange={(e) => setAddress(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
@@ -216,7 +216,7 @@ export default function AnalyzePage() {
                             <button
                                 onClick={() => handleAnalyze()}
                                 disabled={loading}
-                                className="bg-white text-black hover:bg-[#E0E0E0] px-10 py-5 rounded-full font-black text-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                                className="bg-white text-black hover:bg-[#E0E0E0] px-8 py-4 md:px-10 md:py-5 rounded-2xl md:rounded-full font-black text-base md:text-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 w-full md:w-auto"
                             >
                                 {loading ? 'SCANNING' : 'ANALYZE'}
                             </button>
