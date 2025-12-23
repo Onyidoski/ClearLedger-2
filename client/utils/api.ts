@@ -1,7 +1,8 @@
 // client/utils/api.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Ensure this matches your backend port
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'; 
 
 export const fetchStats = async (address: string) => {
     const response = await axios.get(`${API_BASE_URL}/wallet/stats/${address}`);
