@@ -1,12 +1,13 @@
+// client/app/features/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  // Added missing icons 👇
+  // Added TrendingUp to your existing imports
   ArrowRight, ShieldCheck, Zap, Globe, FileText, 
   BarChart3, Lock, Search, MousePointer2, ChevronRight,
-  Download, Database, Layers, Check, Flame 
+  Download, Database, Layers, Check, Flame, TrendingUp 
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -56,8 +57,7 @@ export default function FeaturesPage() {
                 Built for <span className={heroGradient}>Truth Seekers</span>
             </h1>
             <p className="text-xl text-gray-400 leading-relaxed">
-                ClearLedger isn't just a block explorer. It's a forensic analytics engine designed to separate signal from noise.
-            </p>
+ClearLedger combines multiple on-chain data sources to provide the most accurate, safe, and detailed wallet analysis available.            </p>
         </section>
 
         {/* ================= DEEP DIVE 1: THE SPAM ENGINE ================= */}
@@ -192,6 +192,93 @@ export default function FeaturesPage() {
                                 <span>2025</span>
                             </div>
                         </div>
+                    </div>
+                </FadeIn>
+            </div>
+        </section>
+
+        {/* ================= DEEP DIVE 3: PERFORMANCE ENGINE (NEW SECTION) ================= */}
+        <section className="py-20 px-6 border-y border-white/5 bg-[#080808]">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <FadeIn>
+                    <div className="relative">
+                        {/* Visual: P/L Engine UI */}
+                        <div className="bg-[#0F0F0F] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl">
+                            <div className="absolute bottom-0 left-0 bg-[#492BFF]/10 w-64 h-64 blur-[80px]"></div>
+                            
+                            <div className="space-y-4">
+                                {/* Token Row 1 (Profit) */}
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-[#492BFF]/20 flex items-center justify-center text-[#492BFF] font-bold">L</div>
+                                        <div>
+                                            <div className="font-bold text-white">LINK</div>
+                                            <div className="text-xs text-gray-500">Avg Buy: $6.50</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[#00C2FF] font-black text-lg">+$1,240</div>
+                                        <div className="text-[#00C2FF] text-xs font-bold bg-[#00C2FF]/10 px-2 py-0.5 rounded">+45%</div>
+                                    </div>
+                                </div>
+
+                                {/* Token Row 2 (Loss) */}
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 font-bold">U</div>
+                                        <div>
+                                            <div className="font-bold text-white">UNI</div>
+                                            <div className="text-xs text-gray-500">Avg Buy: $12.00</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-red-500 font-black text-lg">-$420</div>
+                                        <div className="text-red-500 text-xs font-bold bg-red-500/10 px-2 py-0.5 rounded">-12%</div>
+                                    </div>
+                                </div>
+
+                                 {/* Token Row 3 (Profit) */}
+                                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold">E</div>
+                                        <div>
+                                            <div className="font-bold text-white">ETH</div>
+                                            <div className="text-xs text-gray-500">Avg Buy: $1,800</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[#00C2FF] font-black text-lg">+$4,500</div>
+                                        <div className="text-[#00C2FF] text-xs font-bold bg-[#00C2FF]/10 px-2 py-0.5 rounded">+150%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </FadeIn>
+
+                <FadeIn delay={200}>
+                    <div className="pl-0 lg:pl-10">
+                        <div className="w-12 h-12 bg-[#492BFF]/20 rounded-2xl flex items-center justify-center text-[#492BFF] mb-6">
+                            <TrendingUp className="w-6 h-6" />
+                        </div>
+                        <h2 className="text-4xl font-black mb-6">Profit or Loss? We Know.</h2>
+                        <p className="text-gray-400 text-lg mb-6 leading-relaxed">
+                            Most explorers just show balance. We calculate your "Cost Basis" to reveal if you are actually up or down on your investments.
+                        </p>
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-3 text-gray-300">
+                                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><Check className="w-3 h-3"/></div>
+                                <span>Historical price tracing</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-gray-300">
+                                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><Check className="w-3 h-3"/></div>
+                                <span>Realized vs Unrealized P/L</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-gray-300">
+                                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><Check className="w-3 h-3"/></div>
+                                <span>Visual performance indicators</span>
+                            </li>
+                        </ul>
                     </div>
                 </FadeIn>
             </div>

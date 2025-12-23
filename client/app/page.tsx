@@ -74,14 +74,14 @@ export default function Home() {
           </p>
 
           {/* CALL TO ACTION */}
-          <div className="w-full max-w-3xl relative z-20 mb-16 flex justify-center gap-6">
-            <Link href="/analyze">
-              <button className="bg-white text-black hover:bg-[#F2F2F2] px-10 py-5 rounded-full font-bold text-lg transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95 flex items-center gap-2">
+          <div className="w-full max-w-3xl relative z-20 mb-16 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
+            <Link href="/analyze" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-white text-black hover:bg-[#F2F2F2] px-8 py-4 md:px-10 md:py-5 rounded-full font-bold text-base md:text-lg transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
                 <Terminal className="w-5 h-5" /> Launch App
               </button>
             </Link>
-            <Link href="#how-it-works">
-              <button className="bg-transparent border border-white/10 text-white hover:bg-white/5 px-10 py-5 rounded-full font-bold text-lg transition-all hover:scale-105 active:scale-95">
+            <Link href="#how-it-works" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto bg-transparent border border-white/10 text-white hover:bg-white/5 px-8 py-4 md:px-10 md:py-5 rounded-full font-bold text-base md:text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                 How it Works
               </button>
             </Link>

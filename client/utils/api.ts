@@ -1,27 +1,20 @@
 // client/utils/api.ts
 import axios from 'axios';
 
-// Point to your backend URL
-const API_URL = 'http://localhost:5000/api/wallet';
+const API_BASE_URL = 'http://localhost:5000/api'; // Ensure this matches your backend port
 
-// Fix: Add ': string' to the address parameter
-export const fetchTransactions = async (address: string) => {
-    try {
-        const response = await axios.get(`${API_URL}/${address}`);
-        return response.data;
-    } catch (error) {
-        console.error("API Error (Transactions):", error);
-        throw error;
-    }
+export const fetchStats = async (address: string) => {
+    const response = await axios.get(`${API_BASE_URL}/wallet/stats/${address}`);
+    return response.data;
 };
 
-// Fix: Add ': string' to the address parameter
-export const fetchStats = async (address: string) => {
-    try {
-        const response = await axios.get(`${API_URL}/${address}/stats`);
-        return response.data;
-    } catch (error) {
-        console.error("API Error (Stats):", error);
-        throw error;
-    }
+export const fetchTransactions = async (address: string) => {
+    const response = await axios.get(`${API_BASE_URL}/wallet/transactions/${address}`);
+    return response.data;
+};
+
+// --- NEW FUNCTION ---
+export const fetchPerformance = async (address: string) => {
+    const response = await axios.get(`${API_BASE_URL}/wallet/performance/${address}`);
+    return response.data;
 };
