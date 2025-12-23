@@ -178,7 +178,7 @@ export default function Home() {
         </section>
 
         {/* ================= HOW IT WORKS ================= */}
-        <section className="py-32 relative border-t border-white/5 bg-[#080808]">
+        <section id="how-it-works" className="py-32 relative border-t border-white/5 bg-[#080808]">
           <div className="max-w-7xl mx-auto px-6">
             <FadeIn>
               <div className="text-center mb-20">

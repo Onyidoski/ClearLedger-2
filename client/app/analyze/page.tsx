@@ -1,7 +1,7 @@
 // client/app/analyze/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react'; // <--- Added useRef
 import {
     Search, ArrowRight, Wallet, Flame, Activity, Sparkles,
     ArrowUpRight, ArrowDownLeft, Terminal, ShieldCheck, Zap, Check,
@@ -13,37 +13,37 @@ import ActivityChart from '../../components/ActivityChart';
 import Navbar from '../../components/Navbar';
 import TokenPerformance from '../../components/TokenPerformance';
 import ModernLoader from '../../components/ModernLoader';
-import PerformanceSkeleton from '../../components/PerformanceSkeleton'; // <--- NEW IMPORT
+import PerformanceSkeleton from '../../components/PerformanceSkeleton';
 import Link from 'next/link';
 
 // --- Types ---
-interface Insight { 
-    title: string; 
-    type: 'warning' | 'success' | 'info'; 
-    message: string; 
+interface Insight {
+    title: string;
+    type: 'warning' | 'success' | 'info';
+    message: string;
 }
 
-interface Token { 
-    symbol: string; 
-    balance: number; 
-    price: number; 
-    valueUSD: number; 
+interface Token {
+    symbol: string;
+    balance: number;
+    price: number;
+    valueUSD: number;
 }
 
 interface WalletStats {
-    address: string; 
-    currentPriceUSD: number; 
-    balanceETH: number; 
-    balanceUSD: number; 
-    netWorthUSD: number; 
-    netWorthETH: number; 
-    totalGasPaidETH: number; 
+    address: string;
+    currentPriceUSD: number;
+    balanceETH: number;
+    balanceUSD: number;
+    netWorthUSD: number;
+    netWorthETH: number;
+    totalGasPaidETH: number;
     totalGasPaidUSD: number;
-    spamTokenCount: number; 
-    totalTransactions: number; 
-    tokens: Token[]; 
+    spamTokenCount: number;
+    totalTransactions: number;
+    tokens: Token[];
     insights: Insight[];
-    cached?: boolean; 
+    cached?: boolean;
 }
 
 interface PerformanceData {
@@ -55,7 +55,7 @@ interface PerformanceData {
     currentValueUSD: number;
     unrealizedPL_USD: number;
     unrealizedPL_Percentage: number;
-    realizedPL_USD: number; 
+    realizedPL_USD: number;
     isProfitable: boolean;
 }
 
@@ -68,19 +68,23 @@ interface RecentSearch {
 export default function AnalyzePage() {
     const [address, setAddress] = useState('');
     const [loading, setLoading] = useState(false);
-    
+
+    // --- NEW: State for the "Slow Loading" message ---
+    const [isWakingUp, setIsWakingUp] = useState(false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
     // Core Data State
     const [stats, setStats] = useState<WalletStats | null>(null);
     const [transactions, setTransactions] = useState<any[]>([]);
-    
+
     // Performance Engine State
     const [performance, setPerformance] = useState<PerformanceData[]>([]);
-    const [performanceStats, setPerformanceStats] = useState<any>(null); 
+    const [performanceStats, setPerformanceStats] = useState<any>(null);
     const [loadingPerformance, setLoadingPerformance] = useState(false);
-    
+
     // Recent Searches State
     const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-    
+
     const [error, setError] = useState('');
 
     // Load History on Mount
@@ -93,10 +97,10 @@ export default function AnalyzePage() {
 
     // Helper: Add to History
     const addToHistory = (addr: string, netWorth: number) => {
-        const newEntry: RecentSearch = { 
-            address: addr, 
-            netWorth: netWorth, 
-            timestamp: Date.now() 
+        const newEntry: RecentSearch = {
+            address: addr,
+            netWorth: netWorth,
+            timestamp: Date.now()
         };
         const updated = [newEntry, ...recentSearches.filter(s => s.address.toLowerCase() !== addr.toLowerCase())].slice(0, 4);
         setRecentSearches(updated);
@@ -105,7 +109,7 @@ export default function AnalyzePage() {
 
     // Helper: Remove from History
     const removeFromHistory = (e: React.MouseEvent, addr: string) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         const updated = recentSearches.filter(s => s.address !== addr);
         setRecentSearches(updated);
         localStorage.setItem('clearledger_recents', JSON.stringify(updated));
@@ -114,12 +118,20 @@ export default function AnalyzePage() {
     const handleAnalyze = async (overrideAddress?: string) => {
         const targetAddress = overrideAddress || address;
         if (!targetAddress) return;
-        
+
         if (overrideAddress) setAddress(overrideAddress);
 
         // Reset States
         setLoading(true);
-        setLoadingPerformance(true); // Start loading performance immediately
+        setIsWakingUp(false); // Reset message
+
+        // --- NEW: Start a 4-second timer ---
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            setIsWakingUp(true); // Show message after 4 seconds
+        }, 4000);
+
+        setLoadingPerformance(true);
         setError('');
         setStats(null);
         setTransactions([]);
@@ -132,7 +144,7 @@ export default function AnalyzePage() {
                 fetchTransactions(targetAddress),
                 fetchStats(targetAddress)
             ]);
-            
+
             setTransactions(Array.isArray(txData.transactions) ? txData.transactions : []);
             setStats(statsData);
             setLoading(false); // Stop Main Loader
@@ -153,6 +165,10 @@ export default function AnalyzePage() {
             setError('Could not verify this address. Please ensure it is a valid ETH address.');
             setLoading(false);
         } finally {
+            // --- NEW: Clear timer when done ---
+            if (timerRef.current) clearTimeout(timerRef.current);
+            setIsWakingUp(false);
+
             setLoadingPerformance(false); // Stop Performance Loader
         }
     };
@@ -213,7 +229,7 @@ export default function AnalyzePage() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 {recentSearches.map((item, idx) => (
-                                    <div 
+                                    <div
                                         key={idx}
                                         onClick={() => handleAnalyze(item.address)}
                                         className="bg-white/[0.03] border border-white/5 hover:border-[#492BFF]/50 hover:bg-white/[0.05] rounded-xl p-3 cursor-pointer transition group relative text-left"
@@ -222,7 +238,7 @@ export default function AnalyzePage() {
                                             <div className="font-mono text-sm text-gray-300 group-hover:text-white truncate max-w-[80%]">
                                                 {item.address.substring(0, 6)}...{item.address.substring(38)}
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={(e) => removeFromHistory(e, item.address)}
                                                 className="text-gray-600 hover:text-red-500 transition"
                                             >
@@ -237,21 +253,40 @@ export default function AnalyzePage() {
                             </div>
                         </div>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full opacity-80">
-                        <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#492BFF]/20 rounded-xl text-[#492BFF]"><Zap className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Real-Time</div></div></div>
-                        <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#00C2FF]/20 rounded-xl text-[#00C2FF]"><ShieldCheck className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Safe Mode</div></div></div>
-                        <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#FFAC43]/20 rounded-xl text-[#FFAC43]"><Check className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Verified</div></div></div>
-                    </div>
+                    {!loading && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full opacity-80">
+                            <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#492BFF]/20 rounded-xl text-[#492BFF]"><Zap className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Real-Time</div></div></div>
+                            <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#00C2FF]/20 rounded-xl text-[#00C2FF]"><ShieldCheck className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Safe Mode</div></div></div>
+                            <div className="flex items-center justify-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm"><div className="p-2 bg-[#FFAC43]/20 rounded-xl text-[#FFAC43]"><Check className="w-5 h-5" /></div><div className="text-left text-sm"><div className="text-white font-bold">Verified</div></div></div>
+                        </div>
+                    )}
                 </section>
 
                 {/* ================= RESULTS DASHBOARD ================= */}
                 {error && <div className="max-w-xl mx-auto p-4 bg-red-500/10 border border-red-500/50 text-red-200 rounded-xl mb-12 text-center font-bold animate-in fade-in zoom-in duration-300">{error}</div>}
-                
-                {loading && <ModernLoader />}
+
+                {/* --- NEW: Loader with Wake-up Message --- */}
+                {loading && (
+                    <div className="flex flex-col items-center justify-center py-10">
+                        <ModernLoader />
+
+                        {isWakingUp && (
+                            <div className="mt-6 text-center animate-in fade-in zoom-in duration-500 max-w-md mx-auto">
+                                <p className="text-[#00C2FF] font-bold text-sm uppercase tracking-widest mb-2">
+                                    Waking up the server...
+                                </p>
+                                <p className="text-gray-400 text-xs px-6 leading-relaxed">
+                                    Since this is a free instance, the server went to sleep to save energy.
+                                    This might take about 60 seconds. Thank you for your patience!
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {!loading && stats && (
                     <div className="max-w-7xl mx-auto px-4 md:px-6 mb-20 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                        
+
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3">
                                 <div className={`w-3 h-3 rounded-full ${stats.cached ? 'bg-green-500' : 'bg-[#00C2FF] animate-pulse'}`}></div>
@@ -321,15 +356,15 @@ export default function AnalyzePage() {
 
                         {/* P/L PERFORMANCE ENGINE OR SKELETON */}
                         <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
-                           {loadingPerformance ? (
+                            {loadingPerformance ? (
                                 <PerformanceSkeleton />
-                           ) : (
-                                <TokenPerformance 
-                                     data={performance} 
-                                     stats={performanceStats} 
-                                     isLoading={false} 
+                            ) : (
+                                <TokenPerformance
+                                    data={performance}
+                                    stats={performanceStats}
+                                    isLoading={false}
                                 />
-                           )}
+                            )}
                         </div>
 
                         {/* Charts & History Grid */}
@@ -343,7 +378,7 @@ export default function AnalyzePage() {
                                         <Terminal className="w-5 h-5 text-gray-400" />
                                         <span className="font-mono text-sm text-gray-400">Recent Transactions</span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={handleDownload}
                                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-colors group"
                                         title="Export as CSV"

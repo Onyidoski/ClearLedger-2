@@ -36,8 +36,8 @@ export default function Navbar() {
       {/* Navbar Header */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${isScrolled
-            ? 'h-20 bg-[#050505]/50 backdrop-blur-sm'
-            : 'h-24 bg-transparent'
+          ? 'h-20 bg-[#050505]/50 backdrop-blur-sm'
+          : 'h-24 bg-transparent'
           }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between relative">
@@ -63,7 +63,7 @@ export default function Navbar() {
                 Features
               </Link>
               <Link
-                href="#pricing"
+                href="/#pricing"
                 className="px-5 py-2 rounded-full text-xs font-bold text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-300 uppercase tracking-wide"
               >
                 Pricing
@@ -75,8 +75,8 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             {/* Connect Wallet Button */}
             <button className={`hidden md:block px-5 py-2 rounded-full font-bold text-xs transition-all hover:scale-105 shadow-lg ${isScrolled
-                ? 'bg-white text-black hover:bg-gray-200'
-                : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
+              ? 'bg-white text-black hover:bg-gray-200'
+              : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
               }`}>
               Connect Wallet
             </button>
@@ -118,7 +118,7 @@ export default function Navbar() {
           FEATURES
         </Link>
         <Link
-          href="#pricing"
+          href="/#pricing"
           onClick={() => setIsOpen(false)}
           className={`text-3xl font-black text-white hover:text-[#00C2FF] transition-all duration-300 transform ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'} delay-200`}
         >

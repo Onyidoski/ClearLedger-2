@@ -24,29 +24,39 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
 /* --- CUSTOM SCROLLBAR FOR DARK THEME --- */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px; /* Slim width */
-  height: 6px; /* Slim height for horizontal */
+  width: 6px;
+  /* Slim width */
+  height: 6px;
+  /* Slim height for horizontal */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02); /* Very subtle track */
+  background: rgba(255, 255, 255, 0.02);
+  /* Very subtle track */
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15); /* Dark Grey thumb */
+  background: rgba(255, 255, 255, 0.15);
+  /* Dark Grey thumb */
   border-radius: 10px;
   transition: background 0.3s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #492BFF; /* Brand color on hover */
+  background: #492BFF;
+  /* Brand color on hover */
 }
 
 /* Firefox support */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+}
+
+html {
+  scroll-behavior: smooth;
 }
