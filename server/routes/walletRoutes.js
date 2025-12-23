@@ -3,10 +3,11 @@ const express = require('express');
 const router = express.Router();
 const walletController = require('../controllers/walletController');
 
-// Existing Route (Syncs & Lists Transactions)
-router.get('/:address', walletController.getTransactions);
+// Existing Routes
+router.get('/stats/:address', walletController.getWalletStats);
+router.get('/transactions/:address', walletController.getTransactions);
 
-// NEW Route (Calculates Stats)
-router.get('/:address/stats', walletController.getWalletStats);
+// NEW Route for P/L Engine
+router.get('/performance/:address', walletController.getPortfolioPerformance);
 
 module.exports = router;
